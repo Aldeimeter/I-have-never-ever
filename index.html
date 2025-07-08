@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Phrase Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #phrase {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 80%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #clear {
+            background-color: #dc3545;
+        }
+        #clear:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div id="phrase">Click "Next" to see a phrase!</div>
+    <button id="next">Next</button>
+    <button id="clear">Clear History</button>
+
+    <script>
+        // Function to load phrases from JSON file
+        async function loadPhrases() {
+            try {
+                const response = await fetch('phrases.json'); // Replace with the actual path to your JSON file
+                const data = await response.json();
+                return data.phrases;
+            } catch (error) {
+                console.error('Error loading phrases:', error);
+                return [];
+            }
+        }
+
+        // Function to get shown phrases from localStorage
+        function getShownPhrases() {
+            const shown = localStorage.getItem('shownPhrases');
+            return shown ? JSON.parse(shown) : [];
+        }
+
+        // Function to save shown phrases to localStorage
+        function saveShownPhrases(shownPhrases) {
+            localStorage.setItem('shownPhrases', JSON.stringify(shownPhrases));
+        }
+
+        // Function to get a random phrase that hasn't been shown
+        function getRandomPhrase(phrases, shownPhrases) {
+            const availablePhrases = phrases.filter(phrase => !shownPhrases.includes(phrase));
+            if (availablePhrases.length === 0) {
+                return null; // No more phrases available
+            }
+            const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+            return availablePhrases[randomIndex];
+        }
+
+        // Function to display a new random phrase
+        async function displayRandomPhrase() {
+            const phrases = await loadPhrases();
+            const shownPhrases = getShownPhrases();
+            const phraseElement = document.getElementById('phrase');
+
+            if (phrases.length === 0) {
+                phraseElement.textContent = 'Error loading phrases!';
+                return;
+            }
+
+            const randomPhrase = getRandomPhrase(phrases, shownPhrases);
+            if (randomPhrase) {
+                phraseElement.textContent = randomPhrase;
+                shownPhrases.push(randomPhrase);
+                saveShownPhrases(shownPhrases);
+            } else {
+                phraseElement.textContent = 'No more phrases to show! Clear history to start over.';
+            }
+        }
+
+        // Event listener for the "Next" button
+        document.getElementById('next').addEventListener('click', displayRandomPhrase);
+
+        // Event listener for the "Clear History" button
+        document.getElementById('clear').addEventListener('click', () => {
+            localStorage.removeItem('shownPhrases');
+            document.getElementById('phrase').textContent = 'History cleared! Click "Next" to see a phrase!';
+        });
+    </script>
+</body>
+</html>
